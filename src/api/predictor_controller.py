@@ -108,7 +108,39 @@ class PredictorController:
             'incorrect': result['incorrect'],
             'success_rate': result['success_rate']
         }
-
+    
+    def update_config(self, predictor_id, data):
+        """Update the predictor's configuration"""
+        # Проверяем существование предиктора
+        if not self.manager.predictor_exists(predictor_id):
+            return {
+                'status': 'error',
+                'error_code': 'predictor_not_found',
+                'message': f'Predictor with ID {predictor_id} not found'
+            }
+        
+        # В этой реализации просто возвращаем уведомление о том, что
+        # функционал обновления конфигурации еще не реализован полностью
+        return {
+            'status': 'error',
+            'error_code': 'not_implemented',
+            'message': 'Configuration update is not fully implemented yet'
+        }
+        
+        # TODO: Реализовать обновление конфигурации предиктора
+        # Пример реализации:
+        # success = self.manager.update_predictor_config(predictor_id, data)
+        # if success:
+        #     return {
+        #         'status': 'success',
+        #         'message': 'Predictor configuration updated'
+        #     }
+        # else:
+        #     return {
+        #         'status': 'error',
+        #         'error_code': 'update_failed',
+        #         'message': 'Failed to update predictor configuration'
+        #     }
     
     def generate_report(self, predictor_id, format_type='json', from_date=None, to_date=None):
         """Generate a report about the predictor's performance"""
@@ -166,19 +198,55 @@ class PredictorController:
         if format_type.lower() == 'markdown':
             # Преобразуем отчет в Markdown (упрощенная версия)
             markdown = f"""
-    # Отчет о работе предиктора {predictor_id}
+# Отчет о работе предиктора {predictor_id}
 
-    ## Общая статистика
-    - Всего предсказаний: {report['report']['general_statistics']['total_predictions']}
-    - Правильных предсказаний: {report['report']['general_statistics']['correct_predictions']}
-    - Успешность: {report['report']['general_statistics']['success_rate']:.2f}%
-    - Обработано точек данных: {report['report']['general_statistics']['data_points_processed']}
+## Общая статистика
+- Всего предсказаний: {report['report']['general_statistics']['total_predictions']}
+- Правильных предсказаний: {report['report']['general_statistics']['correct_predictions']}
+- Успешность: {report['report']['general_statistics']['success_rate']:.2f}%
+- Обработано точек данных: {report['report']['general_statistics']['data_points_processed']}
 
-    ## Топ состояний по частоте
-    """
+## Топ состояний по частоте
+"""
             
             if state_stats:
                 markdown += "| Состояние | Вхождений | Верных | Успешность (%) |\n"
                 markdown += "|-----------|-----------|--------|---------------|\n"
-
-    # Другие методы для остальных эндпоинтов...
+                
+                for stat in state_stats[:10]:
+                    markdown += f"| {stat['state']} | {stat['occurrences']} | {stat['correct']} | {stat['success_rate']:.2f} |\n"
+            
+            report['markdown'] = markdown
+        
+        return report
+    
+    def visualize(self, predictor_id, viz_type='price_chart', format_type='json'):
+        """Generate a visualization of the predictor's results"""
+        # Проверяем существование предиктора
+        if not self.manager.predictor_exists(predictor_id):
+            return {
+                'status': 'error',
+                'error_code': 'predictor_not_found',
+                'message': f'Predictor with ID {predictor_id} not found'
+            }
+        
+        # В этой реализации просто возвращаем уведомление о том, что
+        # функционал визуализации еще не реализован полностью
+        return {
+            'status': 'error',
+            'error_code': 'not_implemented',
+            'message': 'Visualization is not fully implemented yet'
+        }
+        
+        # TODO: Реализовать визуализацию результатов предиктора
+        # Пример реализации:
+        # if format_type == 'svg':
+        #     # Генерируем SVG изображение
+        #     svg_content = self._generate_svg_visualization(predictor_id, viz_type)
+        #     return svg_content
+        # else:
+        #     # Возвращаем данные в формате JSON
+        #     return {
+        #         'status': 'success',
+        #         'visualization_data': self._get_visualization_data(predictor_id, viz_type)
+        #     }
