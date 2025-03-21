@@ -119,28 +119,20 @@ class PredictorController:
                 'message': f'Predictor with ID {predictor_id} not found'
             }
         
-        # В этой реализации просто возвращаем уведомление о том, что
-        # функционал обновления конфигурации еще не реализован полностью
-        return {
-            'status': 'error',
-            'error_code': 'not_implemented',
-            'message': 'Configuration update is not fully implemented yet'
-        }
+        # Обновляем конфигурацию
+        success = self.manager.update_config(predictor_id, data)
         
-        # TODO: Реализовать обновление конфигурации предиктора
-        # Пример реализации:
-        # success = self.manager.update_predictor_config(predictor_id, data)
-        # if success:
-        #     return {
-        #         'status': 'success',
-        #         'message': 'Predictor configuration updated'
-        #     }
-        # else:
-        #     return {
-        #         'status': 'error',
-        #         'error_code': 'update_failed',
-        #         'message': 'Failed to update predictor configuration'
-        #     }
+        if success:
+            return {
+                'status': 'success',
+                'message': 'Configuration updated successfully'
+            }
+        else:
+            return {
+                'status': 'error',
+                'error_code': 'update_failed',
+                'message': 'Failed to update configuration'
+            }
     
     def generate_report(self, predictor_id, format_type='json', from_date=None, to_date=None):
         """Generate a report about the predictor's performance"""
@@ -237,16 +229,3 @@ class PredictorController:
             'error_code': 'not_implemented',
             'message': 'Visualization is not fully implemented yet'
         }
-        
-        # TODO: Реализовать визуализацию результатов предиктора
-        # Пример реализации:
-        # if format_type == 'svg':
-        #     # Генерируем SVG изображение
-        #     svg_content = self._generate_svg_visualization(predictor_id, viz_type)
-        #     return svg_content
-        # else:
-        #     # Возвращаем данные в формате JSON
-        #     return {
-        #         'status': 'success',
-        #         'visualization_data': self._get_visualization_data(predictor_id, viz_type)
-        #     }

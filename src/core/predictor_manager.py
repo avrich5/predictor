@@ -149,8 +149,10 @@ class PredictorManager:
         if not state or not hasattr(predictor, 'state_statistics'):
             return 0
         
-        state_str = str(state)
-        stats = predictor.state_statistics.get(state)
+        # Преобразуем состояние в строку, если оно не строка
+        state_key = state if isinstance(state, str) else str(state)
+        
+        stats = predictor.state_statistics.get(state_key)
         if not stats or stats['total'] == 0:
             return 0
     
@@ -290,11 +292,20 @@ class PredictorManager:
                 
                 # Проверяем, было ли предсказание верным
                 prediction_signal = prediction['prediction']
+                
+                # Получаем состояние для этого предсказания
+                state = prediction.get('state')
+                
+                # Флаг, определяющий, учитывать ли предсказание в статистике
+                count_prediction = True
+                is_correct = False
+                
                 if prediction_signal == 0 or actual_outcome == 0:
                     # Если предсказание "не знаю" или результат незначителен, не считаем
-                    pass
+                    count_prediction = False
                 elif prediction_signal == actual_outcome:
                     correct += 1
+                    is_correct = True
                     # Обновляем статистику предиктора
                     predictor.total_predictions += 1
                     predictor.correct_predictions += 1
@@ -302,6 +313,24 @@ class PredictorManager:
                     incorrect += 1
                     # Обновляем статистику предиктора
                     predictor.total_predictions += 1
+                
+                # Обновляем статистику по состояниям, если состояние определено и предсказание учитывается
+                if count_prediction and state is not None:
+                    # Убедимся, что state_statistics инициализирован
+                    if not hasattr(predictor, 'state_statistics'):
+                        predictor.state_statistics = {}
+                    
+                    # Преобразуем состояние в строку для унифицированного хранения
+                    state_key = str(state)
+                    
+                    # Инициализируем статистику для этого состояния, если её нет
+                    if state_key not in predictor.state_statistics:
+                        predictor.state_statistics[state_key] = {'total': 0, 'correct': 0}
+                    
+                    # Обновляем статистику
+                    predictor.state_statistics[state_key]['total'] += 1
+                    if is_correct:
+                        predictor.state_statistics[state_key]['correct'] += 1
                 
                 # Обновляем общую успешность
                 if hasattr(predictor, 'total_predictions') and predictor.total_predictions > 0:
@@ -341,7 +370,7 @@ class PredictorManager:
             predictor.correct_predictions = 0
             predictor.success_rate = 0.0
             predictor.point_statistics = {}
-            predictor.state_statistics = defaultdict(lambda: {'total': 0, 'correct': 0})
+            predictor.state_statistics = {}  # Изменено с defaultdict на обычный словарь для совместимости
         
         # Обрабатываем данные последовательно
         for kline in klines:
@@ -361,4 +390,30 @@ class PredictorManager:
         
         return result
     
-    # Другие методы для остальных функций...
+    def update_config(self, predictor_id, config_updates):
+        """
+        Update the configuration of an existing predictor
+        
+        Parameters:
+        predictor_id (str): ID of the predictor
+        config_updates (dict): Configuration parameters to update
+        
+        Returns:
+        bool: Success status
+        """
+        if not self.predictor_exists(predictor_id):
+            return False
+        
+        predictor_data = self.predictors[predictor_id]
+        config = predictor_data['config']
+        
+        # Обновляем только те параметры, которые переданы в config_updates
+        for key, value in config_updates.items():
+            if hasattr(config, key):
+                # Особая обработка для significant_change_pct, который хранится как доля, а не процент
+                if key == 'significant_change_pct':
+                    setattr(config, key, value / 100.0)
+                else:
+                    setattr(config, key, value)
+        
+        return True
